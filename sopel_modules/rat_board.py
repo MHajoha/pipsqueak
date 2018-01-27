@@ -1648,7 +1648,12 @@ def cmd_reopen(bot, trigger, id):
     """
     try:
         result = callapi(bot, 'PUT', data={'status': 'open'}, uri='/rescues/' + str(id), triggernick=str(trigger.nick))
-        rescue = Rescue.load(result['data'][0])
+        try:
+            addNamesFromV2Response(result['included'])
+        except:
+            pass
+
+        rescue = Rescue.load(convertV2DataToV1(result['data'])[0])
         bot.memory['ratbot']['board'].add(rescue)
 
         with rescue.change():
