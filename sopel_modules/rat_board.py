@@ -1648,9 +1648,14 @@ def cmd_reopen(bot, trigger, id):
     """
     try:
         result = callapi(bot, 'PUT', data={'status': 'open'}, uri='/rescues/' + str(id), triggernick=str(trigger.nick))
-        refresh_cases(bot, force=True)
-        updateBoardIndexes(bot)
-        bot.say('Reopened case. Cases refreshed, care for your case numbers!')
+        rescue = Rescue.load(result['data'][0])
+        bot.memory['ratbot']['board'].add(rescue)
+
+        with rescue.change():
+            rescue.data.update({"boardIndex": rescue.boardindex})
+
+        save_case_later(bot, rescue, forceFull=True)
+        bot.say('Reopened case {case.client_name}. It is now #{case.boardIndex}.'.format(case=rescue))
     except ratlib.api.http.APIError:
         # print('[RatBoard] apierror.')
         bot.reply('id ' + str(id) + ' does not exist or other API Error.')
