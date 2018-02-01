@@ -1650,10 +1650,10 @@ def cmd_reopen(bot, trigger, id):
         result = callapi(bot, 'PUT', data={'status': 'open'}, uri='/rescues/' + str(id), triggernick=str(trigger.nick))
         try:
             addNamesFromV2Response(result['included'])
-        except:
+        except KeyError:
             pass
 
-        rescue = Rescue.load(convertV2DataToV1(result['data'])[0])
+        rescue = Rescue.load(convertV2DataToV1(result['data'][0], single=True))
         bot.memory['ratbot']['board'].add(rescue)
 
         with rescue.change():

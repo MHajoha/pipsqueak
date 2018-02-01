@@ -289,6 +289,11 @@ def getPrivLevel(trigger):
         return -1
 
 def addNamesFromV2Response(ratdata):
+    """
+    Update our cached rats with new info from the API
+    :param ratdata: Should usually be `result['included']` of an API call
+    :raise: KeyError if `ratdata` is faulty
+    """
     for rat in ratdata:
         if rat['type'] != "rats":
             continue
