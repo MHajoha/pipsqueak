@@ -1,2 +1,3 @@
+websockets
 -e git://github.com/Shizmob/pydle.git@asyncio#egg=pydle
 aiounittest
