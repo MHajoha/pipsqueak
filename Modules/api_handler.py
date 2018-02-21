@@ -18,13 +18,8 @@ import asyncio
 from typing import Union
 
 
-class APIHandlerError(Exception):
-    """Error in the API handler itself."""
-    pass
-
-
 class APIError(Exception):
-    """Something has happened in the API and it's returned weird things."""
+    """Raised when there is an error in the API or the handler itself."""
     pass
 
 
@@ -52,10 +47,10 @@ class APIHandler(object):
         Connect to server.
 
         Raises:
-            APIHandlerError: If this instance is already connected.
+            APIError: If this instance is already connected.
         """
         if self._connection:
-            raise APIHandlerError(f"Already connected to a server: {self._connection.host}")
+            raise APIError(f"Already connected to a server: {self._connection.host}")
 
         uri = f"wss://{self.hostname}" if self.tls else f"ws://{self.hostname}"
         if self.token:
@@ -68,10 +63,10 @@ class APIHandler(object):
         Disconnect from the server.
 
         Raises:
-            APIHandlerError: If this instance is not connected.
+            APIError: If this instance is not connected.
         """
         if not self._connection:
-            raise APIHandlerError("Not connected to any server")
+            raise APIError("Not connected to any server")
 
         self._connection.close()
         self._connection = None
@@ -79,7 +74,7 @@ class APIHandler(object):
     async def send_raw(self, data: Union[str, bytes, dict]):
         """Send raw data to the server."""
         if not self._connection:
-            raise APIHandlerError("Not connected to any server")
+            raise APIError("Not connected to any server")
 
         if isinstance(data, str) or isinstance(data, bytes):
             await self._connection.send(data)
