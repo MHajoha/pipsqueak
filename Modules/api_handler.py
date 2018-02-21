@@ -43,7 +43,7 @@ class APIHandler(object):
         self.hostname = hostname
         self.token = token
         self.tls = tls
-        self._connection = None
+        self._connection: websockets.WebSocketClientProtocol = None
 
         asyncio.get_event_loop().run_until_complete(self.connect())
 
@@ -74,9 +74,12 @@ class APIHandler(object):
             raise APIHandlerError("Not connected to any server")
 
         self._connection.close()
+        self._connection = None
 
     async def send_raw(self, data: Union[str, bytes, dict]):
         """Send raw data to the server."""
+        if not self._connection:
+            raise APIHandlerError("Not connected to any server")
 
         if isinstance(data, str) or isinstance(data, bytes):
             await self._connection.send(data)
