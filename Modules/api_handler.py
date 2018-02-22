@@ -49,7 +49,7 @@ class BaseWebsocketAPIHandler(object):
         self._connection: websockets.WebSocketClientProtocol = None
         self._listener_task: asyncio.Task = None
         self._waiting_requests: Set[UUID] = set()
-        self._request_responses: Dict[UUID, Mapping] = {}
+        self._request_responses: Dict[UUID, Dict[str, Any]] = {}
 
     connected: bool = property(lambda self: self._connection is not None and self._connection.open)
 
@@ -167,7 +167,7 @@ class BaseWebsocketAPIHandler(object):
         params["action"] = endpoint, action
         return await self.request(params)
 
-    async def request(self, data: MutableMapping[str, Any]) -> Mapping[str, Any]:
+    async def request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Make a request to the server, attaching a randomly generated UUID in order to identify and return the response.
         """
@@ -184,7 +184,7 @@ class BaseWebsocketAPIHandler(object):
         self._waiting_requests.add(request_id)
         return await self._retrieve_response(request_id)
 
-    async def _retrieve_response(self, request_id: UUID) -> Mapping[str, Any]:
+    async def _retrieve_response(self, request_id: UUID) -> Dict[str, Any]:
         """Wait for a response to a particular request and return it."""
         if request_id not in self._waiting_requests:
             raise APIError("Cannot wait for response to a request that was never made")
@@ -195,7 +195,7 @@ class BaseWebsocketAPIHandler(object):
         return self._request_responses[request_id]
 
     @abstractmethod
-    async def update_rescue(self, rescue, full: bool) -> dict:
+    async def update_rescue(self, rescue, full: bool) -> Dict[str, Any]:
         """
         Send a rescue's data to the API.
 
@@ -208,7 +208,7 @@ class BaseWebsocketAPIHandler(object):
 class WebsocketAPIHandler21(BaseWebsocketAPIHandler):
     api_version = "v2.1"
 
-    async def update_rescue(self, rescue, full: bool):
+    async def update_rescue(self, rescue, full: bool) -> Dict[str, Any]:
         """
         Send a rescue's data to the API.
 
