@@ -216,9 +216,7 @@ class WebsocketAPIHandler21(BaseWebsocketAPIHandler):
             rescue (Rescue): :class:`Rescue` object to be sent.
             full (bool): If this is True, all rescue data will be sent. Otherwise, only properties that have changed.
         """
-
         if not rescue.case_id:
             raise APIError("Cannot send rescue without ID to the API")
 
-        request = {"action": ["rescues", "update"], "id": rescue.case_id, "data": rescue.json(full)}
-        return await self.request(request)
+        return await self.call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
