@@ -136,7 +136,7 @@ class BaseWebsocketAPIHandler(object):
         else:
             await self._connection.send(json.dumps(data))
 
-    def _construct_request(self, endpoint: (str, str), root_params: dict = {}, meta_params: dict = {}) -> str:
+    def _construct_request(self, endpoint: (str, str), root_params: dict = None, meta_params: dict = None) -> str:
         """ Constructs the JSON to be passed along the WebSocket channel from the given parameters
             root_params has the power to overwrite the endpoint!
             Args:
@@ -147,6 +147,11 @@ class BaseWebsocketAPIHandler(object):
             Returns: 
                 JSON representation of thr request that can be directly passed to send_raw()
         """
+        if root_params is None:
+            root_params = {}
+        if meta_params is None:
+            meta_params = {}
+
         request_id = uuid4()
         while request_id in [*self._waiting_requests, *self._request_responses]: request_id = uuid4()
         if "request_id" not in meta_params.keys(): meta_params["request_id"] = str(request_id)
