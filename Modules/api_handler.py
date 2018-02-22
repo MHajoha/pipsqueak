@@ -136,34 +136,45 @@ class BaseWebsocketAPIHandler(object):
         else:
             await self._connection.send(json.dumps(data))
 
-    def _construct_request(self, endpoint: (str, str), root_params: dict = None, meta_params: dict = None) -> str:
-        """ Constructs the JSON to be passed along the WebSocket channel from the given parameters
-            root_params has the power to overwrite the endpoint!
-            Args:
-                endpoint (str, str): Api Action to execute [example: ("rescues","search")]
-                root_params (dict): Key-value pairs of parameters for the request, these will be processed by the server
-                meta_params (dict): Key-value pairs of parameters that will be included in the "meta" parameter of the request.
-                    These will not be processed by the server.
-            Returns: 
-                JSON representation of thr request that can be directly passed to send_raw()
+    async def call(self, endpoint: str, action: str, params: dict=None, meta: dict=None) -> dict:
         """
-        if root_params is None:
-            root_params = {}
-        if meta_params is None:
-            meta_params = {}
+        Constructs the JSON to be passed along the WebSocket channel from the given parameters.
 
-        request_id = uuid4()
-        while request_id in [*self._waiting_requests, *self._request_responses]: request_id = uuid4()
-        if "request_id" not in meta_params.keys(): meta_params["request_id"] = str(request_id)
-        json_dict = {"action": [endpoint[0], endpoint[1]], "meta": meta_params}
-        json_dict = {**json_dict, **root_params}
-        return json.dumps(json_dict)
+        Args:
+            endpoint (str): Endpoint to address. (e.g. 'rescues')
+            action (str): Action for that endpoint to execute. (e.g. 'search')
+            params (dict): Key-value pairs of parameters for the request, these will be processed by the server. Can
+                override the endpoint.
+            meta (dict): Key-value pairs of parameters that will be included in the "meta" parameter of the request.
+                These should not be processed by the server.
+
+        Returns:
+            dict: Response from the API.
+
+        Example:
+            >>> await self.call("rescues", "search", {"status": "closed", "notes": ""})  # to find cases with needed pw
+        """
+        if params is None:
+            params = {}
+        if meta is None:
+            meta = {}
+
+        if "meta" in params.keys():
+            params["meta"].update(meta)
+        else:
+            params["meta"] = meta
+
+        params["action"] = endpoint, action
+        return await self.request(params)
 
     async def request(self, data: MutableMapping[str, Any]) -> Mapping[str, Any]:
         """
         Make a request to the server, attaching a randomly generated UUID in order to identify and return the response.
         """
         request_id = uuid4()
+        while request_id in self._waiting_requests or request_id in self._request_responses.keys():
+            request_id = uuid4()
+
         if "meta" in data.keys():
             data["meta"]["request_id"] = str(request_id)
         else:
