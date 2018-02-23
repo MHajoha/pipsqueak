@@ -22,7 +22,7 @@ import websockets
 
 import config
 
-log = logging.getLogger(f'{config.Logging.base_logger}.api')
+log = logging.getLogger(f'{config.Logging.base_logger}.{__name__}')
 
 
 class APIError(Exception):
