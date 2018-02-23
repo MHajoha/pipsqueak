@@ -106,7 +106,8 @@ class BaseWebsocketAPIHandler(ABC):
         Disconnect, then connect again, changing any properties while we're at it.
         This method should be used to change any of those things.
         """
-        await self.disconnect()
+        if self.connected:
+            await self.disconnect()
 
         if hostname:
             self._hostname = hostname
