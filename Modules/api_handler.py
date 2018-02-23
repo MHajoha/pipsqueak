@@ -241,8 +241,8 @@ class BaseWebsocketAPIHandler(ABC):
         """
 
 
-class WebsocketAPIHandler21(BaseWebsocketAPIHandler):
-    api_version = "v2.1"
+class WebsocketAPIHandler20(BaseWebsocketAPIHandler):
+    api_version = "v2.0"
 
     async def update_rescue(self, rescue, full: bool) -> Dict[str, Any]:
         """
@@ -256,3 +256,7 @@ class WebsocketAPIHandler21(BaseWebsocketAPIHandler):
             raise APIError("Cannot send rescue without ID to the API")
 
         return await self.call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
+
+
+class WebsocketAPIHandler21(WebsocketAPIHandler20):
+    api_version = "v2.1"
