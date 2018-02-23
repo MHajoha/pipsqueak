@@ -47,6 +47,15 @@ class IRC:
         SASL = True
 
 
+class API:
+    hostname = "dev.api.fuelrats.com"
+    """Hostname of the API server."""
+    token = "alongstringofletters"
+    """OAuth token to authenticate with the API."""
+    use_tls = True
+    """Whether to use TLS encryption for the API connection."""
+
+
 class Logging:
     """
     Log configurations
