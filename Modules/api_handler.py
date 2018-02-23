@@ -44,9 +44,9 @@ class BaseWebsocketAPIHandler(ABC):
              token (str): OAuth token to be used for authorization or None if it's not needed.
              tls (bool): Whether to use TLS when connecting or not ('ws:' versus 'wss:').
         """
-        self.hostname = hostname
-        self.token = token
-        self.tls = tls
+        self._hostname = hostname
+        self._token = token
+        self._tls = tls
         self._connection: websockets.WebSocketClientProtocol = None
 
         self._listener_task: asyncio.Task = None
@@ -68,9 +68,9 @@ class BaseWebsocketAPIHandler(ABC):
         if self.connected:
             raise APIError(f"Already connected to a server: {self._connection.host}")
 
-        uri = f"wss://{self.hostname}" if self.tls else f"ws://{self.hostname}"
-        if self.token:
-            uri += f"/?bearer={self.token}"
+        uri = f"wss://{self._hostname}" if self._tls else f"ws://{self._hostname}"
+        if self._token:
+            uri += f"/?bearer={self._token}"
 
         self._connection = await websockets.connect(uri)
 
@@ -100,6 +100,22 @@ class BaseWebsocketAPIHandler(ABC):
         self._listener_task = None
         await self._connection.close()
         self._connection = None
+
+    async def reconnect(self, hostname: str=None, token: str=None, tls: bool=None):
+        """
+        Disconnect, then connect again, changing any properties while we're at it.
+        This method should be used to change any of those things.
+        """
+        await self.disconnect()
+
+        if hostname:
+            self._hostname = hostname
+        if token:
+            self._token = token
+        if tls:
+            self._tls = tls
+
+        await self.connect()
 
     async def _message_handler(self):
         """
