@@ -14,7 +14,7 @@ This module is built on top of the Pydle system.
 import json
 import asyncio
 import logging
-from typing import Union, Any, Mapping, MutableMapping, Dict, Set
+from typing import Union, Any, Dict, Set
 from uuid import UUID, uuid4
 from abc import abstractmethod, abstractproperty, ABC
 
