@@ -16,7 +16,7 @@ import asyncio
 import logging
 from typing import Union, Any, Mapping, MutableMapping, Dict, Set
 from uuid import UUID, uuid4
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty, ABC
 
 import websockets
 
@@ -30,9 +30,10 @@ class APIError(Exception):
     pass
 
 
-class BaseWebsocketAPIHandler(object):
-    """Partly abstract base class for API Handlers."""
-    api_version: str = None
+class BaseWebsocketAPIHandler(ABC):
+    """Abstract base class for API Handlers."""
+    api_version = abstractproperty()
+    """API version. To be overloaded in subclasses."""
 
     def __init__(self, hostname: str, token: str=None, tls=False):
         """
