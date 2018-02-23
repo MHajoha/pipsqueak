@@ -152,7 +152,7 @@ class BaseWebsocketAPIHandler(object):
             dict: Response from the API.
 
         Example:
-            >>> await self.call("rescues", "search", {"status": "closed", "notes": ""})  # to find cases with needed pw
+            `await call("rescues", "search", {"status": "closed", "notes": ""})  # to find cases with needed pw`
         """
         if params is None:
             params = {}
