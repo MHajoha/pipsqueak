@@ -186,13 +186,16 @@ class BaseWebsocketAPIHandler(object):
 
     async def _retrieve_response(self, request_id: UUID) -> Dict[str, Any]:
         """Wait for a response to a particular request and return it."""
-        if request_id not in self._waiting_requests:
-            raise APIError("Cannot wait for response to a request that was never made")
+        if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
+            raise APIError("Response already consumed or never queued")
 
         while request_id in self._waiting_requests:
             await asyncio.sleep(0.1)
 
-        return self._request_responses[request_id]
+        try:
+            return self._request_responses[request_id]
+        except KeyError:
+            raise APIError("Response already consumed by something else")
 
     @abstractmethod
     async def update_rescue(self, rescue, full: bool) -> Dict[str, Any]:
