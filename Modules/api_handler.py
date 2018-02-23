@@ -89,7 +89,7 @@ class BaseWebsocketAPIHandler(object):
             APIError: If this instance is not connected.
         """
         if not self.connected:
-            raise APIError("Not connected to any server")
+            raise APIError("Not connected to API")
 
         self._listener_task.cancel()
         self._listener_task = None
@@ -128,8 +128,8 @@ class BaseWebsocketAPIHandler(object):
 
     async def _send_raw(self, data: Union[str, bytes, dict]):
         """Send raw data to the server."""
-        if not self._connection:
-            raise APIError("Not connected to any server")
+        if not self.connected:
+            raise APIError("Not connected to API")
 
         if isinstance(data, str) or isinstance(data, bytes):
             await self._connection.send(data)
