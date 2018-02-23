@@ -47,9 +47,13 @@ class BaseWebsocketAPIHandler(object):
         self.token = token
         self.tls = tls
         self._connection: websockets.WebSocketClientProtocol = None
+
         self._listener_task: asyncio.Task = None
+        """See :meth:`self._message_handler`"""
         self._waiting_requests: Set[UUID] = set()
+        """Holds UUIDs of requests currently waiting for a response."""
         self._request_responses: Dict[UUID, Dict[str, Any]] = {}
+        """Maps request UUIDs to their responses. See :meth:`self._retrieve_response`"""
 
     connected: bool = property(lambda self: self._connection is not None and self._connection.open)
 
