@@ -184,13 +184,24 @@ class BaseWebsocketAPIHandler(object):
         self._waiting_requests.add(request_id)
         return await self._retrieve_response(request_id)
 
-    async def _retrieve_response(self, request_id: UUID) -> Dict[str, Any]:
-        """Wait for a response to a particular request and return it."""
+    async def _retrieve_response(self, request_id: UUID, max_wait: int=100) -> Dict[str, Any]:
+        """
+        Wait for a response to a particular request and return it.
+
+        Arguments:
+            request_id (UUID): The request's ID.
+            max_wait (int): Abort after this amount of time. In hundredth of a second. (centiseconds?)
+        """
         if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
             raise APIError("Response already consumed or never queued")
 
-        while request_id in self._waiting_requests:
-            await asyncio.sleep(0.1)
+        for i in range(max_wait):
+            if request_id in self._waiting_requests:
+                await asyncio.sleep(0.01)
+            else:
+                break
+        else:
+            raise APIError(f"API took too long to respond to request")
 
         try:
             return self._request_responses[request_id]
