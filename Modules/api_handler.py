@@ -163,7 +163,7 @@ class BaseWebsocketAPIHandler(ABC):
 
     async def call(self, endpoint: str, action: str, params: dict=None, meta: dict=None) -> dict:
         """
-        Constructs the JSON to be passed along the WebSocket channel from the given parameters.
+        Sends a request constructed from the given parameters along the WebSocket channel and returns the response.
 
         Args:
             endpoint (str): Endpoint to address. (e.g. 'rescues')
