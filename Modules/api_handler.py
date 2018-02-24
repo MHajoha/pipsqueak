@@ -35,7 +35,7 @@ class BaseWebsocketAPIHandler(ABC):
     api_version = abstractproperty()
     """API version. To be overloaded in subclasses."""
 
-    def __init__(self, hostname: str, token: str=None, tls=False, *, loop: asyncio.BaseEventLoop=None):
+    def __init__(self, hostname: str, token: str=None, tls=True, *, loop: asyncio.BaseEventLoop=None):
         """
         Create a new API Handler.
 
