@@ -37,18 +37,23 @@ class NotConnectedError(Exception):
 
 class UnauthorizedError(Exception):
     """No authentication was provided but the action requires some."""
-    def __init__(self, action: (str, str)):
+    def __init__(self, action: (str, str), response: dict=None):
+        self.response = response
         super().__init__(f"Action {action} requires an API token")
 
 
 class ForbiddenError(Exception):
     """Authentication was provided, but it was deemed insufficient."""
-    def __init__(self, action: (str, str)):
+    def __init__(self, action: (str, str), response: dict=None):
+        self.response = response
         super().__init__(f"Insufficient permissions for action {action}")
 
 
 class InternalAPIError(Exception):
     """Something broke."""
+    def __init__(self, message, response: dict=None):
+        self.response = response
+        super().__init__(message)
 
 
 class MismatchedVersionError(Exception):
