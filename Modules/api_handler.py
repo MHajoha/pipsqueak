@@ -26,8 +26,35 @@ log = logging.getLogger(f'{config.Logging.base_logger}.{__name__}')
 
 
 class APIError(Exception):
-    """Raised when there is an error in the API or the handler itself."""
-    pass
+    """Miscellaneous API error."""
+
+
+class NotConnectedError(Exception):
+    """Handler not connected to API."""
+    def __init__(self, message: str=None):
+        super().__init__(message if message else "Not connected to API")
+
+
+class UnauthorizedError(Exception):
+    """No authentication was provided but the action requires some."""
+    def __init__(self, action: (str, str)):
+        super().__init__(f"Action {action} requires an API token")
+
+
+class ForbiddenError(Exception):
+    """Authentication was provided, but it was deemed insufficient."""
+    def __init__(self, action: (str, str)):
+        super().__init__(f"Insufficient permissions for action {action}")
+
+
+class InternalAPIError(Exception):
+    """Something broke."""
+
+
+class MismatchedVersionError(Exception):
+    """Handler version and API version are different."""
+    def __init__(self, handler_ver: str, api_ver: str):
+        super().__init__(f"Tried to connect to {api_ver} API with {handler_ver} Handler.")
 
 
 class BaseWebsocketAPIHandler(ABC):
@@ -66,10 +93,12 @@ class BaseWebsocketAPIHandler(ABC):
         Connect to server, start the listener task and make sure we are on the correct API version.
 
         Raises:
-            APIError: If this instance is already connected.
+            NotConnectedError: If this instance is already connected. Shush.
+            MismatchedVersionError: If this handler version does not match that of the API we're connecting to.
+            APIError: If the API sent rubbish as a connect message.
         """
         if self.connected:
-            raise APIError(f"Already connected to a server: {self._connection.host}")
+            raise NotConnectedError(f"Already connected to a server: {self._connection.host}")
 
         uri = f"wss://{self._hostname}" if self._tls else f"ws://{self._hostname}"
         if self._token:
@@ -81,7 +110,7 @@ class BaseWebsocketAPIHandler(ABC):
         try:
             connect_message = json.loads(await self._connection.recv())
             if connect_message["meta"]["API-Version"] != self.api_version:
-                raise APIError("Mismatched API and client versions!")
+                raise MismatchedVersionError(self.api_version, connect_message["meta"]["API-Version"])
         except json.JSONDecodeError:
             raise APIError("Connect message from the API could not be parsed")
         except KeyError:
@@ -94,10 +123,10 @@ class BaseWebsocketAPIHandler(ABC):
         Disconnect from the server.
 
         Raises:
-            APIError: If this instance is not connected.
+            NotConnectedError: If this instance is not connected.
         """
         if not self.connected:
-            raise APIError("Not connected to API")
+            raise NotConnectedError
 
         self._listener_task.cancel()
         self._listener_task = None
@@ -154,7 +183,7 @@ class BaseWebsocketAPIHandler(ABC):
     async def _send_raw(self, data: Union[str, bytes, dict]):
         """Send raw data to the server."""
         if not self.connected:
-            raise APIError("Not connected to API")
+            raise NotConnectedError
 
         if isinstance(data, str) or isinstance(data, bytes):
             await self._connection.send(data)
@@ -214,8 +243,14 @@ class BaseWebsocketAPIHandler(ABC):
         Wait for a response to a particular request and return it.
 
         Arguments:
-            request_id (UUID): The request's ID.
-            max_wait (int): Abort after this amount of time. In hundredth of a second. (centiseconds?)
+            request_id (UUID): The request's ID which was included in the sent metadata and will be returned untouched
+                by the API.
+            max_wait (int): Abort after this amount of time. In hundredths of a second. (centiseconds?)
+
+        Raises:
+            TimeoutError: If the API takes longer than *max_wait* to respond.
+            APIError: If no request with *request_id* was ever made or the response was consumed by something else,
+                neither of which should happen.
         """
         if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
             raise APIError("Response already consumed or never queued")
@@ -226,7 +261,7 @@ class BaseWebsocketAPIHandler(ABC):
             else:
                 break
         else:
-            raise APIError(f"API took too long to respond to request")
+            raise TimeoutError(f"API took too long to respond to request")
 
         try:
             return self._request_responses[request_id]
@@ -254,11 +289,14 @@ class WebsocketAPIHandler20(BaseWebsocketAPIHandler):
         Arguments:
             rescue (Rescue): :class:`Rescue` object to be sent.
             full (bool): If this is True, all rescue data will be sent. Otherwise, only properties that have changed.
-        """
-        if not rescue.case_id:
-            raise APIError("Cannot send rescue without ID to the API")
 
-        return await self.call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
+        Raises:
+            ValueError: If *rescue* doesn't have its case ID set.
+        """
+        if rescue.case_id is None:
+            raise ValueError("Cannot send rescue without ID to the API")
+        else:
+            return await self.call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
 
 
 class WebsocketAPIHandler21(WebsocketAPIHandler20):
