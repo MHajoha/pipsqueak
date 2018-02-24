@@ -35,7 +35,7 @@ class BaseWebsocketAPIHandler(ABC):
     api_version = abstractproperty()
     """API version. To be overloaded in subclasses."""
 
-    def __init__(self, hostname: str, token: str=None, tls=False):
+    def __init__(self, hostname: str, token: str=None, tls=False, *, loop: asyncio.BaseEventLoop=None):
         """
         Create a new API Handler. Connect immediately.
 
@@ -43,10 +43,13 @@ class BaseWebsocketAPIHandler(ABC):
              hostname (str): Hostname to connect to.
              token (str): OAuth token to be used for authorization or None if it's not needed.
              tls (bool): Whether to use TLS when connecting or not ('ws:' versus 'wss:').
+             loop (asyncio.BaseEventLoop): Custom event loop to use. Defaults to global loop.
         """
         self._hostname = hostname
         self._token = token
         self._tls = tls
+
+        self._loop = loop if loop else asyncio.get_event_loop()
         self._connection: websockets.WebSocketClientProtocol = None
 
         self._listener_task: asyncio.Task = None
@@ -72,7 +75,7 @@ class BaseWebsocketAPIHandler(ABC):
         if self._token:
             uri += f"/?bearer={self._token}"
 
-        self._connection = await websockets.connect(uri)
+        self._connection = await websockets.connect(uri, loop=self._loop)
 
         # Grab the connect message and compare versions
         try:
@@ -84,7 +87,7 @@ class BaseWebsocketAPIHandler(ABC):
         except KeyError:
             log.error("Did not receive version field from API")
 
-        self._listener_task = asyncio.get_event_loop().create_task(self._message_handler())
+        self._listener_task = self._loop.create_task(self._message_handler())
 
     async def disconnect(self):
         """
@@ -206,7 +209,7 @@ class BaseWebsocketAPIHandler(ABC):
         self._waiting_requests.add(request_id)
         return await self._retrieve_response(request_id)
 
-    async def _retrieve_response(self, request_id: UUID, max_wait: int=100) -> Dict[str, Any]:
+    async def _retrieve_response(self, request_id: UUID, max_wait: int=600) -> Dict[str, Any]:
         """
         Wait for a response to a particular request and return it.
 
