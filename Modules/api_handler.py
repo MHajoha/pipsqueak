@@ -190,9 +190,9 @@ class BaseWebsocketAPIHandler(ABC):
             params["meta"] = meta
 
         params["action"] = endpoint, action
-        return await self.request(params)
+        return await self._request(params)
 
-    async def request(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Make a request to the server, attaching a randomly generated UUID in order to identify and return the response.
         """
