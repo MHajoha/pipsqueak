@@ -270,13 +270,7 @@ class BaseWebsocketAPIHandler(ABC):
 
     @abstractmethod
     async def update_rescue(self, rescue, full: bool) -> Dict[str, Any]:
-        """
-        Send a rescue's data to the API.
-
-        Arguments:
-            rescue (Rescue): :class:`Rescue` object to be sent.
-            full (bool): If this is True, all rescue data will be sent. Otherwise, only properties that have changed.
-        """
+        """Send a rescue's data to the API."""
 
 
 class WebsocketAPIHandler20(BaseWebsocketAPIHandler):
