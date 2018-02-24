@@ -37,7 +37,7 @@ class BaseWebsocketAPIHandler(ABC):
 
     def __init__(self, hostname: str, token: str=None, tls=False, *, loop: asyncio.BaseEventLoop=None):
         """
-        Create a new API Handler. Connect immediately.
+        Create a new API Handler.
 
         Arguments:
              hostname (str): Hostname to connect to.
