@@ -36,24 +36,24 @@ class NotConnectedError(Exception):
 
 
 class UnauthorizedError(Exception):
-    """No authentication was provided but the action requires some."""
-    def __init__(self, action: (str, str), response: dict=None):
+    """401: No authentication was provided but the action requires some."""
+    def __init__(self, message=None, response: dict=None):
         self.response = response
-        super().__init__(f"Action {action} requires an API token")
+        super().__init__(message if message else "(401) API token required, but not provided")
 
 
 class ForbiddenError(Exception):
-    """Authentication was provided, but it was deemed insufficient."""
-    def __init__(self, action: (str, str), response: dict=None):
+    """403: Authentication was provided, but it was deemed insufficient."""
+    def __init__(self, message=None, response: dict=None):
         self.response = response
-        super().__init__(f"Insufficient permissions for action {action}")
+        super().__init__(message if message else "(403) Insufficient permissions")
 
 
 class InternalAPIError(Exception):
-    """Something broke."""
-    def __init__(self, message, response: dict=None):
+    """500: Something broke."""
+    def __init__(self, message=None, response: dict=None):
         self.response = response
-        super().__init__(message)
+        super().__init__(message if message else "(500) Internal Server Error in the API")
 
 
 class MismatchedVersionError(Exception):
@@ -202,7 +202,7 @@ class BaseWebsocketAPIHandler(ABC):
         Args:
             endpoint (str): Endpoint to address. (e.g. 'rescues')
             action (str): Action for that endpoint to execute. (e.g. 'search')
-            params (dict): Key-value pairs of parameters for the request, these will be processed by the server. Can
+            params (dict): Key-value pairs of parameters for the request, these will be processed by the server. Cannot
                 override the endpoint.
             meta (dict): Key-value pairs of parameters that will be included in the "meta" parameter of the request.
                 These should not be processed by the server.
@@ -245,7 +245,8 @@ class BaseWebsocketAPIHandler(ABC):
 
     async def _retrieve_response(self, request_id: UUID, max_wait: int=600) -> Dict[str, Any]:
         """
-        Wait for a response to a particular request and return it.
+        Wait for a response to a particular request and return it. Responses are provided in
+        :field:`self._request_responses` by :meth:`self._message_handler`.
 
         Arguments:
             request_id (UUID): The request's ID which was included in the sent metadata and will be returned untouched
@@ -256,9 +257,12 @@ class BaseWebsocketAPIHandler(ABC):
             TimeoutError: If the API takes longer than *max_wait* to respond.
             APIError: If no request with *request_id* was ever made or the response was consumed by something else,
                 neither of which should happen.
+            UnauthorizedError
+            ForbiddenError
+            InternalAPIError
         """
         if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
-            raise APIError("Response already consumed or never queued")
+            raise APIError(f"Response {request_id} already consumed or request never queued")
 
         for i in range(max_wait):
             if request_id in self._waiting_requests:
@@ -266,12 +270,21 @@ class BaseWebsocketAPIHandler(ABC):
             else:
                 break
         else:
-            raise TimeoutError(f"API took too long to respond to request")
+            raise TimeoutError(f"API took too long to respond to request {request_id}")
 
         try:
-            return self._request_responses[request_id]
+            response = self._request_responses.pop(request_id)
         except KeyError:
-            raise APIError("Response already consumed by something else")
+            raise APIError(f"Response {request_id} already consumed by something else")
+        else:
+            if "status" in response.keys():
+                if response["status"] == 401:
+                    raise UnauthorizedError(response=response)
+                elif response["status"] == 403:
+                    raise ForbiddenError(response=response)
+                elif response["status"] == 500:
+                    raise InternalAPIError(response=response)
+            return response
 
     @abstractmethod
     async def update_rescue(self, rescue, full: bool) -> Dict[str, Any]:
