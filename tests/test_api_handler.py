@@ -45,3 +45,14 @@ class APIHandlerTest(unittest.TestCase):
             await handler20.disconnect()
         if handler21.connected:
             await handler21.disconnect()
+
+    @async_test
+    async def test_call(self):
+        handler = WebsocketAPIHandler21(hostname=self.hostname_v21)
+
+        await handler.connect()
+        response = await handler._call("version", "read")
+        self.assertEqual(response.keys(), {"data", "meta"})
+        self.assertEqual(response["data"].keys(), {"id", "type", "attributes"})
+        self.assertEqual(response["data"]["attributes"].keys(), {"version", "commit", "branch", "tags", "date"})
+        await handler.disconnect()
