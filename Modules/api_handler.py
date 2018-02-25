@@ -168,6 +168,18 @@ class BaseWebsocketAPIHandler(ABC):
                 log.error(f"The following message from the API could not be parsed: {message}")
                 continue
 
+            if "status" in data.keys():
+                # These should be raised in _retrieve_response, but the API currently does not allow that
+                if data["status"] == 401:
+                    log.error("A recent request required an API token, but none is provided")
+                    continue
+                elif data["status"] == 403:
+                    log.error("A recent request required permissions we don't have")
+                    continue
+                elif data["status"] == 500:
+                    log.error("A recent request caused an internal API error")
+                    continue
+
             try:
                 request_id = UUID(data["meta"]["request_id"])
             except KeyError:
@@ -277,13 +289,6 @@ class BaseWebsocketAPIHandler(ABC):
         except KeyError:
             raise APIError(f"Response {request_id} already consumed by something else")
         else:
-            if "status" in response.keys():
-                if response["status"] == 401:
-                    raise UnauthorizedError(response=response)
-                elif response["status"] == 403:
-                    raise ForbiddenError(response=response)
-                elif response["status"] == 500:
-                    raise InternalAPIError(response=response)
             return response
 
     @abstractmethod
