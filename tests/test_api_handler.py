@@ -1,27 +1,47 @@
 import unittest
-import asyncio
+
 from aiounittest import async_test
-from Modules.api_handler import *
+
+from Modules.api_handler import WebsocketAPIHandler20, WebsocketAPIHandler21, MismatchedVersionError
 
 
 class APIHandlerTest(unittest.TestCase):
-    def setUp(self):
-        self.handler = WebsocketAPIHandler21(hostname="dev.api.fuelrats.com", tls=True)
+    hostname_v20 = "api.fuelrats.com"
+    hostname_v21 = "dev.api.fuelrats.com"
 
     @async_test
-    async def test_connect(self):
-        if self.handler.connected: await self.handler.disconnect()
-        await self.handler.connect()
-        self.assertTrue(self.handler.connected)
+    async def test_connection(self):
+        handler = WebsocketAPIHandler21(hostname=self.hostname_v21)
+
+        with self.subTest("connect"):
+            await handler.connect()
+            self.assertTrue(handler.connected)
+            self.assertIsNone(handler._token)
+
+        with self.subTest("reconnect"):
+            await handler.reconnect(token="sometoken")
+            self.assertTrue(handler.connected)
+            self.assertEqual(handler._token, "sometoken")
+
+        with self.subTest("disconnect"):
+            await handler.disconnect()
+            self.assertFalse(handler.connected)
+            self.assertTrue(handler._listener_task.done())
 
     @async_test
-    async def test_disconnect(self):
-        if not self.handler.connected: await self.handler.connect()
-        await self.handler.disconnect()
-        self.assertFalse(self.handler.connected)
+    async def test_version(self):
+        handler20 = WebsocketAPIHandler20(hostname=self.hostname_v21)
+        handler21 = WebsocketAPIHandler21(hostname=self.hostname_v20)
 
-    def test_construct_request(self):
-        self.assertEqual(
-            self.handler._construct_request(("rescues", "search"), {"not": "this"}, {"key": "stuff"}),
-            "{\"action\": [\"rescues\", \"search\"], \"meta\": {\"key\": \"stuff\"}, \"not\": \"this\"}"
-        )
+        with self.subTest("handler < api"):
+            with self.assertRaises(MismatchedVersionError):
+                await handler20.connect()
+
+        with self.subTest("handler > api"):
+            with self.assertRaises(MismatchedVersionError):
+                await handler21.connect()
+
+        if handler20.connected:
+            await handler20.disconnect()
+        if handler21.connected:
+            await handler21.disconnect()
