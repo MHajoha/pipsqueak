@@ -161,7 +161,11 @@ class BaseWebsocketAPIHandler(ABC):
         appropriate request.
         """
         while True:
-            message = await self._connection.recv()
+            try:
+                message = await self._connection.recv()
+            except websockets.ConnectionClosed:
+                return
+
             try:
                 data = json.loads(message)
             except json.JSONDecodeError:
