@@ -109,17 +109,19 @@ class BaseWebsocketAPIHandler(ABC):
         if self._token:
             uri += f"/?bearer={self._token}"
 
-        self._connection = await websockets.connect(uri, loop=self._loop)
+        self._connection: websockets.WebSocketClientProtocol = await websockets.connect(uri, loop=self._loop)
 
         # Grab the connect message and compare versions
         try:
             connect_message = json.loads(await self._connection.recv())
             if connect_message["meta"]["API-Version"] != self.api_version:
+                await self._connection.close(reason="Mismatched version")
                 raise MismatchedVersionError(self.api_version, connect_message["meta"]["API-Version"])
         except json.JSONDecodeError:
+            await self._connection.close(reason="Mismatched version")
             raise APIError("Connect message from the API could not be parsed")
         except KeyError:
-            log.error("Did not receive version field from API")
+            log.warning("Did not receive version field from API")
 
         self._listener_task = self._loop.create_task(self._message_handler())
 
@@ -133,10 +135,7 @@ class BaseWebsocketAPIHandler(ABC):
         if not self.connected:
             raise NotConnectedError
 
-        self._listener_task.cancel()
-        self._listener_task = None
         await self._connection.close()
-        self._connection = None
 
     async def reconnect(self, hostname: str=None, token: str=None, tls: bool=None):
         """
