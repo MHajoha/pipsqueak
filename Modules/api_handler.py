@@ -210,7 +210,7 @@ class BaseWebsocketAPIHandler(ABC):
         else:
             await self._connection.send(json.dumps(data))
 
-    async def call(self, endpoint: str, action: str, params: dict=None, meta: dict=None) -> dict:
+    async def _call(self, endpoint: str, action: str, params: dict=None, meta: dict=None) -> dict:
         """
         Sends a request constructed from the given parameters along the WebSocket channel and returns the response.
 
@@ -314,7 +314,7 @@ class WebsocketAPIHandler20(BaseWebsocketAPIHandler):
         if rescue.case_id is None:
             raise ValueError("Cannot send rescue without ID to the API")
         else:
-            return await self.call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
+            return await self._call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
 
 
 class WebsocketAPIHandler21(WebsocketAPIHandler20):
