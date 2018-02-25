@@ -272,9 +272,6 @@ class BaseWebsocketAPIHandler(ABC):
             TimeoutError: If the API takes longer than *max_wait* to respond.
             APIError: If no request with *request_id* was ever made or the response was consumed by something else,
                 neither of which should happen.
-            UnauthorizedError
-            ForbiddenError
-            InternalAPIError
         """
         if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
             raise APIError(f"Response {request_id} already consumed or request never queued")
@@ -285,6 +282,7 @@ class BaseWebsocketAPIHandler(ABC):
             else:
                 break
         else:
+            self._waiting_requests.remove(request_id)
             raise TimeoutError(f"API took too long to respond to request {request_id}")
 
         try:
