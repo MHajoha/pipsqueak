@@ -254,7 +254,7 @@ class BaseWebsocketAPIHandler(ABC):
         else:
             data["meta"] = {"request_id": str(request_id)}
 
-        await self._send_raw(dict(data))
+        await self._send_raw(data)
         self._waiting_requests.add(request_id)
         return await self._retrieve_response(request_id)
 
