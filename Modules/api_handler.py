@@ -35,25 +35,29 @@ class NotConnectedError(Exception):
         super().__init__(message if message else "Not connected to API")
 
 
+class BaseReturnCodeException(Exception):
+    """Base exception class for when the API returns an error code."""
+    def __init__(self, message: str, response: dict=None):
+        self.response = response
+        super().__init__(message)
+
+
 class UnauthorizedError(Exception):
     """401: No authentication was provided but the action requires some."""
-    def __init__(self, message=None, response: dict=None):
-        self.response = response
-        super().__init__(message if message else "(401) API token required, but not provided")
+    def __init__(self, message: str="(401) API token required, but not provided", response: dict=None):
+        super().__init__(message, response)
 
 
 class ForbiddenError(Exception):
     """403: Authentication was provided, but it was deemed insufficient."""
-    def __init__(self, message=None, response: dict=None):
-        self.response = response
-        super().__init__(message if message else "(403) Insufficient permissions")
+    def __init__(self, message: str="(403) Insufficient permissions", response: dict=None):
+        super().__init__(message, response)
 
 
 class InternalAPIError(Exception):
     """500: Something broke."""
-    def __init__(self, message=None, response: dict=None):
-        self.response = response
-        super().__init__(message if message else "(500) Internal Server Error in the API")
+    def __init__(self, message: str="(500) Internal Server Error in the API", response: dict=None):
+        super().__init__(message, response)
 
 
 class MismatchedVersionError(Exception):
@@ -319,3 +323,82 @@ class WebsocketAPIHandler20(BaseWebsocketAPIHandler):
 
 class WebsocketAPIHandler21(WebsocketAPIHandler20):
     api_version = "v2.1"
+
+    async def _message_handler(self):
+        """
+        Handler to be run continuously. Grabs messages from the connection, parses them and assigns them to the
+        appropriate request.
+        """
+        while True:
+            try:
+                message = await self._connection.recv()
+            except websockets.ConnectionClosed:
+                return
+
+            try:
+                data = json.loads(message)
+            except json.JSONDecodeError:
+                log.error(f"The following message from the API could not be parsed: {message}")
+                continue
+
+            try:
+                request_id = UUID(data["meta"]["request_id"])
+            except KeyError:
+                log.error(f"Message from the API has no request id attached: {str(data)}")
+                continue
+            except ValueError:
+                # not a valid UUID
+                log.error(f"Request ID in API message was not a valid UUID: {data['meta']['request_id']}")
+                continue
+
+            if request_id not in self._waiting_requests:
+                log.error(f"Received unexpected API response: {request_id}")
+                continue
+            else:
+                self._request_responses[request_id] = data
+                self._waiting_requests.remove(request_id)
+
+    async def _retrieve_response(self, request_id: UUID, max_wait: int=600) -> Dict[str, Any]:
+        """
+        Wait for a response to a particular request and return it. Responses are provided in
+        :field:`self._request_responses` by :meth:`self._message_handler`.
+
+        Arguments:
+            request_id (UUID): The request's ID which was included in the sent metadata and will be returned untouched
+                by the API.
+            max_wait (int): Abort after this amount of time. In hundredths of a second. (centiseconds?)
+
+        Raises:
+            TimeoutError: If the API takes longer than *max_wait* to respond.
+            APIError: If no request with *request_id* was ever made or the response was consumed by something else,
+                neither of which should happen.
+            UnauthorizedError
+            ForbiddenError
+            InternalAPIError
+        """
+        if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
+            raise APIError(f"Response {request_id} already consumed or request never queued")
+
+        for i in range(max_wait):
+            if request_id in self._waiting_requests:
+                await asyncio.sleep(0.01)
+            else:
+                break
+        else:
+            self._waiting_requests.remove(request_id)
+            raise TimeoutError(f"API took too long to respond to request {request_id}")
+
+        try:
+            response = self._request_responses.pop(request_id)
+        except KeyError:
+            raise APIError(f"Response {request_id} already consumed by something else")
+        else:
+            if "code" in response.keys():
+                if response["code"] == "unauthorized":
+                    raise UnauthorizedError(response=response)
+                elif response["code"] == "forbidden":
+                    raise ForbiddenError(response=response)
+                elif response["code"] == "internal_server":
+                    raise InternalAPIError(response=response)
+            else:
+                return response
