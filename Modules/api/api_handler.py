@@ -21,49 +21,10 @@ from abc import abstractmethod, abstractproperty, ABC
 import websockets
 
 import config
+from .exceptions import APIError, NotConnectedError, UnauthorizedError, ForbiddenError, InternalAPIError, \
+    MismatchedVersionError
 
 log = logging.getLogger(f'{config.Logging.base_logger}.{__name__}')
-
-
-class APIError(Exception):
-    """Miscellaneous API error."""
-
-
-class NotConnectedError(Exception):
-    """Handler not connected to API."""
-    def __init__(self, message: str=None):
-        super().__init__(message if message else "Not connected to API")
-
-
-class BaseReturnCodeException(Exception):
-    """Base exception class for when the API returns an error code."""
-    def __init__(self, message: str, response: dict=None):
-        self.response = response
-        super().__init__(message)
-
-
-class UnauthorizedError(Exception):
-    """401: No authentication was provided but the action requires some."""
-    def __init__(self, message: str="(401) API token required, but not provided", response: dict=None):
-        super().__init__(message, response)
-
-
-class ForbiddenError(Exception):
-    """403: Authentication was provided, but it was deemed insufficient."""
-    def __init__(self, message: str="(403) Insufficient permissions", response: dict=None):
-        super().__init__(message, response)
-
-
-class InternalAPIError(Exception):
-    """500: Something broke."""
-    def __init__(self, message: str="(500) Internal Server Error in the API", response: dict=None):
-        super().__init__(message, response)
-
-
-class MismatchedVersionError(Exception):
-    """Handler version and API version are different."""
-    def __init__(self, handler_ver: str, api_ver: str):
-        super().__init__(f"Tried to connect to {api_ver} API with {handler_ver} Handler.")
 
 
 class BaseWebsocketAPIHandler(ABC):
