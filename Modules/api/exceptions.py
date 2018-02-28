@@ -1,3 +1,15 @@
+"""
+exceptions.py - Exceptions for API handlers.
+
+Copyright (c) 2018 The Fuel Rats Mischief,
+All rights reserved.
+
+Licensed under the BSD 3-Clause License.
+
+See LICENSE.md
+"""
+
+
 class APIError(Exception):
     """Miscellaneous API error."""
 

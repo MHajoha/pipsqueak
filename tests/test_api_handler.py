@@ -3,7 +3,8 @@ import unittest
 import asyncio
 from aiounittest import async_test
 
-from Modules.api.api_handler import WebsocketAPIHandler20, WebsocketAPIHandler21
+from Modules.api.v21 import WebsocketAPIHandler21
+from Modules.api.v20 import WebsocketAPIHandler20
 from Modules.api.exceptions import MismatchedVersionError
 
 hostname_v20 = "api.fuelrats.com"
