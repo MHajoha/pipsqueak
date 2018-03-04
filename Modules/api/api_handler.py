@@ -13,6 +13,8 @@ from typing import List, Union
 from abc import ABC, abstractmethod, abstractproperty
 from uuid import UUID
 
+from .exceptions import MismatchedVersionError
+
 
 class APIHandler(ABC):
     """Defines the public interface of an API handler."""
@@ -23,6 +25,25 @@ class APIHandler(ABC):
     @abstractmethod
     def __init__(self, hostname: str, token: str=None, tls=True):
         """Initialize a new API handler object."""
+
+    @abstractmethod
+    async def connect(self):
+        """
+        Establish a connection to the API and check versions.
+
+        Raises:
+            NotConnectedError: If this instance is already connected. Shush.
+            MismatchedVersionError: If the API runs a version this handler isn't for.
+        """
+
+    @abstractmethod
+    async def disconnect(self):
+        """
+        Disconnect from the server.
+
+        Raises:
+            NotConnectedError: If this instance is not connected.
+        """
 
     @abstractmethod
     async def update_rescue(self, rescue, full: bool):
