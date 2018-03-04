@@ -22,6 +22,10 @@ class APIHandler(ABC):
     board = None
     """Board object updates from the API should be sent to. To be set by the board."""
 
+    hostname = abstractproperty()
+    token = abstractproperty()
+    tls = abstractproperty()
+
     @abstractmethod
     def __init__(self, hostname: str, token: str=None, tls=True):
         """Initialize a new API handler object."""
