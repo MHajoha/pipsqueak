@@ -17,6 +17,8 @@ from uuid import UUID
 class APIHandler(ABC):
     """Defines the public interface of an API handler."""
     api_version = abstractproperty()
+    board = None
+    """Board object updates from the API should be sent to. To be set by the board."""
 
     @abstractmethod
     def __init__(self, hostname: str, token: str=None, tls=True):
