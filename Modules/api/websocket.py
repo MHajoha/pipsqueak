@@ -108,9 +108,6 @@ class WebsocketRequestHandler(ABC):
         Disconnect, then connect again, changing any properties while we're at it.
         This method should be used to change any of those things.
         """
-        if self.connected:
-            await self.disconnect()
-
         if hostname:
             self._hostname = hostname
         if token:
@@ -118,7 +115,9 @@ class WebsocketRequestHandler(ABC):
         if tls:
             self._tls = tls
 
-        await self.connect()
+        if self.connected:
+            await self.disconnect()
+            await self.connect()
 
     async def _handle_update(self, data: dict, event: str):
         """Handle an update from the API."""
