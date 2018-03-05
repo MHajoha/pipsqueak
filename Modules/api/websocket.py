@@ -103,9 +103,9 @@ class WebsocketRequestHandler(ABC):
 
         await self._connection.close()
 
-    async def reconnect(self, hostname: str=None, token: str=None, tls: bool=None):
+    async def modify(self, hostname: str=None, token: str=None, tls: bool=None):
         """
-        Disconnect, then connect again, changing any properties while we're at it.
+        Change hostname, token or tls properties and reconnect with new values if necessary.
         This method should be used to change any of those things.
         """
         if hostname:
@@ -115,7 +115,7 @@ class WebsocketRequestHandler(ABC):
         if tls:
             self._tls = tls
 
-        if self.connected:
+        if self.connected and (hostname is not None or token is not None or tls is not None):
             await self.disconnect()
             await self.connect()
 

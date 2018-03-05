@@ -53,7 +53,7 @@ class APIHandlerTest20(unittest.TestCase):
             self.assertIsNone(handler._token)
 
         with self.subTest("reconnect"):
-            await handler.reconnect(token="sometoken")
+            await handler.modify(token="sometoken")
             self.assertTrue(handler.connected)
             self.assertEqual(handler._token, "sometoken")
 
