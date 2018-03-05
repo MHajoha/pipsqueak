@@ -52,6 +52,10 @@ class APIHandler(ABC):
         """
 
     @abstractmethod
+    async def modify(self, hostname: str=None, token: str=None, tls: bool=None):
+        """Change hostname, token or tls properties."""
+
+    @abstractmethod
     async def update_rescue(self, rescue, full: bool):
         """Send a rescue's data to the API."""
 
