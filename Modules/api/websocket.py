@@ -55,6 +55,10 @@ class WebsocketRequestHandler(ABC):
 
     connected: bool = property(lambda self: self._connection is not None and self._connection.open)
 
+    hostname = property(lambda self: self._hostname)
+    token = property(lambda self: self._token)
+    tls = property(lambda self: self._tls)
+
     async def connect(self):
         """
         Connect to server, start the listener task and make sure we are on the correct API version.
