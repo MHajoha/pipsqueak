@@ -26,6 +26,8 @@ class APIHandler(ABC):
     token = abstractproperty()
     tls = abstractproperty()
 
+    connected = abstractproperty()
+
     @abstractmethod
     def __init__(self, hostname: str, token: str=None, tls=True):
         """Initialize a new API handler object."""
