@@ -26,7 +26,8 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
 
         Arguments:
             rescue (Rescue): :class:`Rescue` object to be sent.
-            full (bool): If this is True, all rescue data will be sent. Otherwise, only properties that have changed.
+            full (bool): If this is True, all rescue data will be sent. Otherwise, only properties
+                that have changed.
 
         Raises:
             ValueError: If *rescue* doesn't have its case ID set.
@@ -34,7 +35,8 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
         if rescue.case_id is None:
             raise ValueError("Cannot send rescue without ID to the API")
         else:
-            return await self._call("rescues", "update", {"id": rescue.case_id, "data": rescue.json(full)})
+            return await self._call("rescues", "update",
+                                    {"id": rescue.case_id, "data": rescue.json(full)})
 
     async def update_rat(self, rat):
         """Send a rat's data to the API."""

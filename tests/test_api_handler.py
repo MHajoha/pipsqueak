@@ -68,9 +68,14 @@ class APIHandlerTest20(unittest.TestCase):
 
         await handler.connect()
         response = await handler._call("version", "read")
-        self.assertEqual(response.keys(), {"data", "meta"})
-        self.assertEqual(response["data"].keys(), {"id", "type", "attributes"})
-        self.assertEqual(response["data"]["attributes"].keys(), {"version", "commit", "branch", "tags", "date"})
+
+        self.assertEqual(response.keys(),
+                         {"data", "meta"})
+        self.assertEqual(response["data"].keys(),
+                         {"id", "type", "attributes"})
+        self.assertEqual(response["data"]["attributes"].keys(),
+                         {"version", "commit", "branch", "tags", "date"})
+
         await handler.disconnect()
 
 

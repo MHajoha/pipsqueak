@@ -31,7 +31,8 @@ class WebsocketRequestHandler(ABC):
     api_version = abstractproperty()
     """API version. To be overloaded in subclasses."""
 
-    def __init__(self, hostname: str, token: str=None, tls=True, *, loop: asyncio.BaseEventLoop=None):
+    def __init__(self, hostname: str, token: str=None, tls=True, *,
+                 loop: asyncio.BaseEventLoop=None):
         """
         Create a new API Handler.
 
@@ -67,7 +68,8 @@ class WebsocketRequestHandler(ABC):
 
         Raises:
             NotConnectedError: If this instance is already connected. Shush.
-            MismatchedVersionError: If this handler version does not match that of the API we're connecting to.
+            MismatchedVersionError: If this handler version does not match that of the API we're
+                connecting to.
             APIError: If the API sent rubbish as a connect message.
         """
         if self.connected:
@@ -77,14 +79,15 @@ class WebsocketRequestHandler(ABC):
         if self._token:
             uri += f"/?bearer={self._token}"
 
-        self._connection: websockets.WebSocketClientProtocol = await websockets.connect(uri, loop=self._loop)
+        self._connection = await websockets.connect(uri,loop=self._loop)
 
         # Grab the connect message and compare versions
         try:
             connect_message = json.loads(await self._connection.recv())
             if connect_message["meta"]["API-Version"] != self.api_version:
                 await self._connection.close(reason="Mismatched version")
-                raise MismatchedVersionError(self.api_version, connect_message["meta"]["API-Version"])
+                raise MismatchedVersionError(self.api_version,
+                                             connect_message["meta"]["API-Version"])
         except json.JSONDecodeError:
             await self._connection.close(reason="Mismatched version")
             raise APIError("Connect message from the API could not be parsed")
@@ -128,8 +131,8 @@ class WebsocketRequestHandler(ABC):
 
     async def _message_handler(self):
         """
-        Handler to be run continuously. Grabs messages from the connection, parses them and assigns them to the
-        appropriate request.
+        Handler to be run continuously. Grabs messages from the connection, parses them and assigns
+        them to the appropriate request.
         """
         while True:
             try:
@@ -163,7 +166,8 @@ class WebsocketRequestHandler(ABC):
                     log.error(f"Message from the API is not a response or update: {data}")
             except ValueError:
                 # not a valid UUID
-                log.error(f"Request ID in API message was not a valid UUID: {data['meta']['request_id']}")
+                log.error(f"Request ID in API message was not a valid UUID: "
+                          f"{data['meta']['request_id']}")
             else:
                 if request_id not in self._waiting_requests:
                     log.error(f"Received unexpected API response: {request_id}")
@@ -183,21 +187,23 @@ class WebsocketRequestHandler(ABC):
 
     async def _call(self, endpoint: str, action: str, params: dict=None, meta: dict=None) -> dict:
         """
-        Sends a request constructed from the given parameters along the WebSocket channel and returns the response.
+        Sends a request constructed from the given parameters along the WebSocket channel and
+        returns the response.
 
         Args:
             endpoint (str): Endpoint to address. (e.g. 'rescues')
             action (str): Action for that endpoint to execute. (e.g. 'search')
-            params (dict): Key-value pairs of parameters for the request, these will be processed by the server. Cannot
-                override the endpoint.
-            meta (dict): Key-value pairs of parameters that will be included in the "meta" parameter of the request.
-                These should not be processed by the server.
+            params (dict): Key-value pairs of parameters for the request, these will be processed by
+                the server. Cannot override the endpoint.
+            meta (dict): Key-value pairs of parameters that will be included in the "meta" parameter
+                of the request. These should not be processed by the server.
 
         Returns:
             dict: Response from the API.
 
         Example:
-            `await call("rescues", "search", {"status": "closed", "notes": ""})  # to find cases with needed pw`
+            To find cases where PW is needed (Loon will be using this a lot):
+                `await call("rescues", "search", {"status": "closed", "notes": ""})`
         """
         if params is None:
             params = {}
@@ -214,7 +220,8 @@ class WebsocketRequestHandler(ABC):
 
     async def _request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Make a request to the server, attaching a randomly generated UUID in order to identify and return the response.
+        Make a request to the server, attaching a randomly generated UUID in order to identify and
+        return the response.
         """
         request_id = uuid4()
         while request_id in self._waiting_requests or request_id in self._request_responses.keys():
@@ -235,16 +242,18 @@ class WebsocketRequestHandler(ABC):
         :field:`self._request_responses` by :meth:`self._message_handler`.
 
         Arguments:
-            request_id (UUID): The request's ID which was included in the sent metadata and will be returned untouched
-                by the API.
-            max_wait (int): Abort after this amount of time. In hundredths of a second. (centiseconds?)
+            request_id (UUID): The request's ID which was included in the sent metadata and will be
+                returned untouched by the API.
+            max_wait (int): Abort after this amount of time. In hundredths of a second.
 
         Raises:
             TimeoutError: If the API takes longer than *max_wait* to respond.
-            APIError: If no request with *request_id* was ever made or the response was consumed by something else,
-                neither of which should happen.
+            APIError: If no request with *request_id* was ever made or the response was consumed by
+                something else, neither of which should happen.
         """
-        if request_id not in self._waiting_requests and request_id not in self._request_responses.keys():
+        if request_id not in self._waiting_requests and \
+            request_id not in self._request_responses.keys():
+
             raise APIError(f"Response {request_id} already consumed or request never queued")
 
         for i in range(max_wait):
