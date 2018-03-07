@@ -13,7 +13,7 @@ log = logging.getLogger(f"{config.Logging.base_logger}.{__name__}")
 _handlers = {WebsocketAPIHandler20, WebsocketAPIHandler21}
 
 
-def auto_version(hostname: str, token: str=None, tls=True) -> APIHandler:
+def get_correct_version_handler(hostname: str, token: str=None, tls=True) -> APIHandler:
     """
     Get the correct handler for the API version which the hostname provided is running.
     The returned handler will already be connected.
