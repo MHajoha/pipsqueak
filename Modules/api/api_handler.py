@@ -60,10 +60,6 @@ class APIHandler(ABC):
         """Send a rescue's data to the API."""
 
     @abstractmethod
-    async def update_rat(self, rat):
-        """Send a rat's data to the API."""
-
-    @abstractmethod
     async def get_rescues(self, **criteria) -> List:
         """Get all rescues from the API matching the criteria provided."""
 

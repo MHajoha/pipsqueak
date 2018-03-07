@@ -39,9 +39,6 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
                                         "id": rescue.case_id,
                                         "data": rescue.json(full)})
 
-    async def update_rat(self, rat):
-        """Send a rat's data to the API."""
-
     async def get_rescues(self, **criteria) -> List:
         """Get all rescues from the API matching the criteria provided."""
 
