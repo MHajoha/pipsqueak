@@ -185,39 +185,6 @@ class WebsocketRequestHandler(ABC):
         else:
             await self._connection.send(json.dumps(data))
 
-    async def _call(self, endpoint: str, action: str, params: dict=None, meta: dict=None) -> dict:
-        """
-        Sends a request constructed from the given parameters along the WebSocket channel and
-        returns the response.
-
-        Args:
-            endpoint (str): Endpoint to address. (e.g. 'rescues')
-            action (str): Action for that endpoint to execute. (e.g. 'search')
-            params (dict): Key-value pairs of parameters for the request, these will be processed by
-                the server. Cannot override the endpoint.
-            meta (dict): Key-value pairs of parameters that will be included in the "meta" parameter
-                of the request. These should not be processed by the server.
-
-        Returns:
-            dict: Response from the API.
-
-        Example:
-            To find cases where PW is needed (Loon will be using this a lot):
-                `await call("rescues", "search", {"status": "closed", "notes": ""})`
-        """
-        if params is None:
-            params = {}
-        if meta is None:
-            meta = {}
-
-        if "meta" in params.keys():
-            params["meta"].update(meta)
-        else:
-            params["meta"] = meta
-
-        params["action"] = endpoint, action
-        return await self._request(params)
-
     async def _request(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Make a request to the server, attaching a randomly generated UUID in order to identify and

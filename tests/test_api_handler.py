@@ -41,7 +41,7 @@ class APIHandlerTest20(unittest.TestCase):
     def setUpClass(cls):
         # We need to decorate in here because aiounittest doesn't seem to like inheritance
         cls.test_connection = async_test(cls.test_connection, asyncio.get_event_loop())
-        cls.test_call = async_test(cls.test_call, asyncio.get_event_loop())
+        cls.test_request = async_test(cls.test_request, asyncio.get_event_loop())
 
     async def test_connection(self):
         """Test that the connect, reconnect and disconnect methods work as intended."""
@@ -62,12 +62,12 @@ class APIHandlerTest20(unittest.TestCase):
             self.assertFalse(handler.connected)
             self.assertTrue(handler._listener_task.done())
 
-    async def test_call(self):
-        """Test the _call method as far as we can without a token."""
+    async def test_request(self):
+        """Test the _request method as far as we can without a token."""
         handler = self.handler_class(hostname=self.hostname)
 
         await handler.connect()
-        response = await handler._call("version", "read")
+        response = await handler._request({"action": ("version", "read")})
 
         self.assertEqual(response.keys(),
                          {"data", "meta"})

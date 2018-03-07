@@ -35,8 +35,9 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
         if rescue.case_id is None:
             raise ValueError("Cannot send rescue without ID to the API")
         else:
-            return await self._call("rescues", "update",
-                                    {"id": rescue.case_id, "data": rescue.json(full)})
+            return await self._request({"action": ("rescues", "update"),
+                                        "id": rescue.case_id,
+                                        "data": rescue.json(full)})
 
     async def update_rat(self, rat):
         """Send a rat's data to the API."""
