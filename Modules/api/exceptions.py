@@ -28,24 +28,28 @@ class MismatchedVersionError(Exception):
 
 class BaseReturnCodeException(Exception):
     """Base exception class for when the API returns an error code."""
-    def __init__(self, message: str, response: dict=None):
+    _default_message: str = None
+
+    def __init__(self, message: str=_default_message, response: dict=None):
+        """
+        Arguments:
+             message (str): An explanation of why this exception was raised.
+             response (dict): The JSON dict which was returned. Purely for use in an except clause.
+        """
         self.response = response
         super().__init__(message)
 
 
 class UnauthorizedError(BaseReturnCodeException):
-    """401: No authentication was provided but the action requires some."""
-    def __init__(self, message: str="(401) API token required, but not provided", response: dict=None):
-        super().__init__(message, response)
+    """No authentication was provided but the action requires some."""
+    _default_message = "API token required, but not provided (401)"
 
 
 class ForbiddenError(BaseReturnCodeException):
-    """403: Authentication was provided, but it was deemed insufficient."""
-    def __init__(self, message: str="(403) Insufficient permissions", response: dict=None):
-        super().__init__(message, response)
+    """Authentication was provided, but it was deemed insufficient."""
+    _default_message = "Insufficient permissions (403)"
 
 
 class InternalAPIError(BaseReturnCodeException):
-    """500: Something broke."""
-    def __init__(self, message: str="(500) Internal Server Error in the API", response: dict=None):
-        super().__init__(message, response)
+    """Something broke."""
+    _default_message = "Internal Server Error in the API (500)"
