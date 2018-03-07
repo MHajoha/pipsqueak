@@ -81,7 +81,7 @@ class WebsocketRequestHandler(ABC):
         if self._token:
             uri += f"/?bearer={self._token}"
 
-        self._connection = await websockets.connect(uri,loop=self._loop)
+        self._connection = await websockets.connect(uri, loop=self._loop)
 
         # Grab the connect message and compare versions
         try:
@@ -221,8 +221,7 @@ class WebsocketRequestHandler(ABC):
                 something else, neither of which should happen.
         """
         if request_id not in self._waiting_requests and \
-            request_id not in self._request_responses.keys():
-
+                request_id not in self._request_responses.keys():
             raise APIError(f"Response {request_id} already consumed or request never queued")
 
         for i in range(max_wait):
