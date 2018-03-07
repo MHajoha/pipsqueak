@@ -74,3 +74,11 @@ class APIHandler(ABC):
     @abstractmethod
     async def get_rat_by_id(self, id: Union[str, UUID]):
         """Get rat with the provided ID."""
+
+    @staticmethod
+    @abstractmethod
+    def rescue_from_json(json: dict):
+        """
+        Take the JSON dict representing a rescue as returned by the API and construct a Rescue
+        object from it
+        """
