@@ -11,7 +11,7 @@ See LICENSE.md
 import asyncio
 import json
 import logging
-from abc import ABC, abstractproperty
+from abc import ABC, abstractproperty, abstractmethod
 from typing import Set, Dict, Any, Union
 from uuid import UUID, uuid4
 
@@ -126,10 +126,9 @@ class WebsocketRequestHandler(ABC):
             await self.disconnect()
             await self.connect()
 
+    @abstractmethod
     async def _handle_update(self, data: dict, event: str):
         """Handle an update from the API."""
-        if event == "rescueUpdated":
-            pass
 
     async def _message_handler(self):
         """
