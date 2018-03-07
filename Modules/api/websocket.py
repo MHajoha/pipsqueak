@@ -18,7 +18,9 @@ from uuid import UUID, uuid4
 import websockets
 
 import config
-from .exceptions import NotConnectedError, MismatchedVersionError, APIError
+from .exceptions import NotConnectedError, MismatchedVersionError, APIError, UnauthorizedError, \
+    ForbiddenError, InternalAPIError
+
 log = logging.getLogger(f"{config.Logging.base_logger}.{__name__}")
 
 
@@ -236,5 +238,14 @@ class WebsocketRequestHandler(ABC):
             response = self._request_responses.pop(request_id)
         except KeyError:
             raise APIError(f"Response {request_id} already consumed by something else")
-        else:
-            return response
+
+        if "code" in response.keys():
+            # API returned us an error code
+            if response["code"] == "unauthorized":
+                raise UnauthorizedError
+            elif response["code"] == "forbidden":
+                raise ForbiddenError
+            elif response["code"] == "internal_server":
+                raise InternalAPIError
+            else:
+                log.error(f"Received unknown error code '{response['code']}' from the API")
