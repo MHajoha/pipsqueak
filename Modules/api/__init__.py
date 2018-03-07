@@ -1,13 +1,8 @@
-import logging
-
-import config
 from .exceptions import MismatchedVersionError
 from .api_handler import APIHandler
 from .v20 import WebsocketAPIHandler20
 from .v21 import WebsocketAPIHandler21
 from .websocket import WebsocketRequestHandler
-
-log = logging.getLogger(f"{config.Logging.base_logger}.{__name__}")
 
 
 _handlers = {WebsocketAPIHandler20, WebsocketAPIHandler21}

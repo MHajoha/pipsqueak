@@ -10,14 +10,16 @@ See LICENSE.md
 """
 import asyncio
 import json
+import logging
 from abc import ABC, abstractproperty
 from typing import Set, Dict, Any, Union
 from uuid import UUID, uuid4
 
 import websockets
 
-from . import log
+import config
 from .exceptions import NotConnectedError, MismatchedVersionError, APIError
+log = logging.getLogger(f"{config.Logging.base_logger}.{__name__}")
 
 
 class WebsocketRequestHandler(ABC):
