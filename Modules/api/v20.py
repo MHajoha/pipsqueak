@@ -60,7 +60,12 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
                 self.board.from_api(self.rescue_from_json(rescue_json))
 
     @classmethod
-    async def rescue_from_json(cls, json: dict) -> Rescue:
+    def rescue_from_json(cls, json: dict) -> Rescue:
+        """
+        Take the JSON dict representing a rescue as returned by the API and construct a
+        :class:`Rescue` object from it.
+        """
+
         if json["type"] != "rescues":
             raise ValueError("JSON dict does not seem to represent a rescue")
 

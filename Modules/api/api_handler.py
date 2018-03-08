@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from uuid import UUID
 
 from Modules.Rat_Board import RatBoard
+from Modules.rat_rescue import Rescue
 from .exceptions import MismatchedVersionError
 
 
@@ -78,8 +79,8 @@ class APIHandler(ABC):
 
     @classmethod
     @abstractmethod
-    def rescue_from_json(cls, json: dict):
+    def rescue_from_json(cls, json: dict) -> Rescue:
         """
-        Take the JSON dict representing a rescue as returned by the API and construct a Rescue
-        object from it
+        Take the JSON dict representing a rescue as returned by the API and construct a
+        :class:`Rescue` object from it.
         """
