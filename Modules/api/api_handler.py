@@ -9,7 +9,7 @@ Licensed under the BSD 3-Clause License.
 See LICENSE.md
 """
 
-from typing import List, Union
+from typing import Union, Set
 from abc import ABC, abstractmethod, abstractproperty
 from uuid import UUID
 
@@ -62,11 +62,11 @@ class APIHandler(ABC):
         """Send a rescue's data to the API."""
 
     @abstractmethod
-    async def get_rescues(self, **criteria) -> List:
+    async def get_rescues(self, **criteria) -> Set[Rescue]:
         """Get all rescues from the API matching the criteria provided."""
 
     @abstractmethod
-    async def get_rescue_by_id(self, id: Union[str, UUID]):
+    async def get_rescue_by_id(self, id: Union[str, UUID]) -> Rescue:
         """Get rescue with the provided ID."""
 
     @abstractmethod
