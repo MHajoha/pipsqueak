@@ -60,6 +60,20 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
                 self.board.from_api(self.rescue_from_json(rescue_json))
 
     @classmethod
+    def quotation_from_json(cls, json: dict) -> Quotation:
+        """
+        Take the JSON dict representing a case json (from !inject) as returned by the API and
+        construct a :class:`Quotation` object from it.
+        """
+        return Quotation(
+            json["message"],
+            json["author"],
+            datetime.strptime(json["createdAt"], "%Y-%m-%dT%H:%M:%S.%f"),
+            datetime.strptime(json["updatedAt"], "%Y-%m-%dT%H:%M:%S.%f"),
+            json["lastAuthor"]
+        )
+
+    @classmethod
     def rescue_from_json(cls, json: dict) -> Rescue:
         """
         Take the JSON dict representing a rescue as returned by the API and construct a
@@ -79,16 +93,7 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
         updated_at = datetime.strptime(json["attributes"]["updatedAt"],
                                        "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        quotes = [
-            Quotation(
-                quote["message"],
-                quote["author"],
-                datetime.strptime(quote["createdAt"], "%Y-%m-%dT%H:%M:%S.%f"),
-                datetime.strptime(quote["updatedAt"], "%Y-%m-%dT%H:%M:%S.%f"),
-                quote["lastAuthor"]
-            ) for quote in json["attributes"]["quotes"]
-        ]
-
+        quotes = [cls.quotation_from_json(quote) for quote in json["attributes"]["quotes"]]
         rats = [UUID(rat["id"]) for rat in json["relationships"]["rats"]["data"]]
 
         return Rescue(

@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod, abstractproperty
 from uuid import UUID
 
 from Modules.Rat_Board import RatBoard
-from Modules.rat_rescue import Rescue
+from Modules.rat_rescue import Rescue, Quotation
 from .exceptions import MismatchedVersionError
 
 
@@ -76,6 +76,14 @@ class APIHandler(ABC):
     @abstractmethod
     async def get_rat_by_id(self, id: Union[str, UUID]):
         """Get rat with the provided ID."""
+
+    @classmethod
+    @abstractmethod
+    def quotation_from_json(cls, json: dict) -> Quotation:
+        """
+        Take the JSON dict representing a case quote (from !inject) as returned by the API and
+        construct a :class:`Quotation` object from it.
+        """
 
     @classmethod
     @abstractmethod
