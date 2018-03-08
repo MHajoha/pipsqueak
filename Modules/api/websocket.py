@@ -247,3 +247,5 @@ class WebsocketRequestHandler(ABC):
                 raise InternalAPIError
             else:
                 log.error(f"Received unknown error code '{response['code']}' from the API")
+        else:
+            return response
