@@ -9,7 +9,7 @@ Licensed under the BSD 3-Clause License.
 See LICENSE.md
 """
 from datetime import datetime
-from typing import Dict, Any, Union, List
+from typing import Dict, Any, Union, Set
 
 from uuid import UUID
 
@@ -41,11 +41,22 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
                                         "id": rescue.case_id,
                                         "data": rescue.json(full)})
 
-    async def get_rescues(self, **criteria) -> List:
+    async def get_rescues(self, **criteria) -> Set[Rescue]:
         """Get all rescues from the API matching the criteria provided."""
+        data = self._make_serializable(criteria)
+        data["action"] = ("rescues", "read")
 
-    async def get_rescue_by_id(self, id: Union[str, UUID]):
+        response = await self._request(data)
+
+        results = set()
+        for json_rescue in response["data"]:
+            results.add(self.rescue_from_json(json_rescue))
+
+        return results
+
+    async def get_rescue_by_id(self, id: Union[str, UUID]) -> Rescue:
         """Get rescue with the provided ID."""
+        return (await self.get_rescues(id=id)).pop()
 
     async def get_rats(self, **criteria):
         """Get all rats from the API matching the criteria provided."""
@@ -117,3 +128,16 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
             lang_id=lang_id,
             rats=rats
         )
+
+    @classmethod
+    def _make_serializable(cls, data: dict) -> dict:
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, UUID):
+                result[key] = str(value)
+            elif isinstance(value, datetime):
+                result[key] = value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                result[key] = value
+
+        return result
