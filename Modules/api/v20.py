@@ -60,17 +60,13 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
                 self.board.from_api(self.rescue_from_json(rescue_json))
 
     @classmethod
-    async def rescue_from_json(cls, json: dict):
+    async def rescue_from_json(cls, json: dict) -> Rescue:
         if json["type"] != "rescues":
             raise ValueError("JSON dict does not seem to represent a rescue")
 
-        try:
-            irc_nickname = json["attributes"]["data"]["IRCNick"]
-        except KeyError:
-            irc_nickname = json["attributes"]["client"]
-        else:
-            if irc_nickname is None:
-                irc_nickname = json["attributes"]["client"]
+        irc_nickname = json["attributes"]["data"].get("IRCNick", json["attributes"]["client"])
+        board_index = json["attributes"]["data"].get("boardIndex", None)
+        lang_id = json["attributes"]["data"].get("langID", "en")
 
         created_at = datetime.strptime(json["attributes"]["createdAt"],
                                        "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -87,16 +83,6 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
                 quote["lastAuthor"]
             ) for quote in json["attributes"]["quotes"]
         ]
-
-        try:
-            board_index = json["attributes"]["data"]["boardIndex"]
-        except KeyError:
-            board_index = None
-
-        try:
-            lang_id = json["attributes"]["data"]["langID"]
-        except KeyError:
-            lang_id = "en"
 
         rats = [UUID(rat["id"]) for rat in json["relationships"]["rats"]["data"]]
 
