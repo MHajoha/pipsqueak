@@ -53,6 +53,12 @@ class WebsocketAPIHandler20(WebsocketRequestHandler, APIHandler):
     async def get_rat_by_id(self, id: Union[str, UUID]):
         """Get rat with the provided ID."""
 
+    async def _handle_update(self, data: dict, event: str):
+        """Handle an update from the API."""
+        if event == "rescueUpdated":
+            for rescue_json in data["data"]:
+                self.board.from_api(self.rescue_from_json(rescue_json))
+
     @classmethod
     async def rescue_from_json(cls, json: dict):
         if json["type"] != "rescues":

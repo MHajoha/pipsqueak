@@ -13,13 +13,14 @@ from typing import List, Union
 from abc import ABC, abstractmethod, abstractproperty
 from uuid import UUID
 
+from Modules.Rat_Board import RatBoard
 from .exceptions import MismatchedVersionError
 
 
 class APIHandler(ABC):
     """Defines the public interface of an API handler."""
     api_version = abstractproperty()
-    board = None
+    board: RatBoard = None
     """Board object updates from the API should be sent to. To be set by the board."""
 
     hostname = abstractproperty()
