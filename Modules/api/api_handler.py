@@ -9,6 +9,7 @@ Licensed under the BSD 3-Clause License.
 See LICENSE.md
 """
 
+import asyncio
 from typing import Union, Set
 from abc import ABC, abstractmethod, abstractproperty
 from uuid import UUID
@@ -31,7 +32,8 @@ class APIHandler(ABC):
     connected = abstractproperty()
 
     @abstractmethod
-    def __init__(self, hostname: str, token: str=None, tls=True):
+    def __init__(self, hostname: str, token: str=None, tls=True, *,
+                 loop: asyncio.BaseEventLoop=None):
         """Initialize a new API handler object."""
 
     @abstractmethod
